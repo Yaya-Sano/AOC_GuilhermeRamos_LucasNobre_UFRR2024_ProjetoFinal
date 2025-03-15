@@ -15,12 +15,12 @@ F_completa = Or(
     And(Not(A), Not(B), Not(C), D)  # A'B'C'D
 )
 
-# Expressão booleana simplificada
+# Expressão booleana simplificada fornecida
 F_simplificada = Or(
-    And(A, B, C, D),  # ABCD
-    And(A, Not(B), C, D),  # AB'CD
-    And(Not(A), B, C),  # A'BC
-    And(Not(A), Or(And(Not(B), Not(C), D), And(B, Not(C), D)))  # A'(B'C'D + BC'D)
+    And(A, C, D),  # A ∧ C ∧ D
+    And(A, B, Not(C)),  # A ∧ B ∧ ¬C
+    And(B, C, Not(A)),  # B ∧ C ∧ ¬A
+    And(D, Not(A), Not(C))  # D ∧ ¬A ∧ ¬C
 )
 
 # Resolver para verificar a equivalência entre a expressão completa e simplificada
