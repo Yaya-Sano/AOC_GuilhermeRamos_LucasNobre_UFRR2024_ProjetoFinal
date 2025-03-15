@@ -17,9 +17,9 @@ O projeto busca validar circuitos lógicos digitais através de **expressões bo
 │-- 📜 README.md
 │-- 📜 requirements.txt
 │-- 📂 src
-│   ├── 📜 circuitos.py  # Definição de circuitos e expressões booleanas
-│   ├── 📜 verificacao.py  # Implementação da verificação com Z3 e manipulação booleana
-│   ├── 📜 testes.py  # Casos de teste para validar circuitos
+│   ├── 📂 Circuitos # Definição de circuitos e expressões booleanas
+│   ├── 📂 Verificações # Implementação das verificações com Z3 e manipulação booleana
+│   ├── 📂 Testes # Casos de teste para validar circuitos
 │-- 📂 docs
 │   ├── 📜 relatorio.pdf  # Relatório técnico do projeto
 │-- 📂 exemplos
