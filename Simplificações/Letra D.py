@@ -1,4 +1,4 @@
-from sympy import symbols, simplify_logic, Or, And, Not
+from sympy import symbols, simplify_logic, Or, And, Not 
 
 def expressao_booleana(A, B, C, D):
     """
