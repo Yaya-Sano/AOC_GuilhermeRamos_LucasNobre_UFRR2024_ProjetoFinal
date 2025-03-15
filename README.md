@@ -30,7 +30,7 @@ O projeto busca validar circuitos lógicos digitais através de **expressões bo
 ## 🚀 Instalação e Uso
 ### 1️⃣ Clonar o Repositório
 ```bash
-git clone https://github.com/seu-usuario/circuitos-logicos-z3.git
+git clone https://github.com/Yaya-Sano/AOC_GuilhermeRamos_LucasNobre_UFRR2024_ProjetoFinal.git
 cd circuitos-logicos-z3
 ```
 ### 2️⃣ Criar um Ambiente Virtual (opcional)
