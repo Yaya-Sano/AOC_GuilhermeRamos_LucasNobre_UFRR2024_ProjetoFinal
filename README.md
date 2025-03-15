@@ -19,6 +19,7 @@ O projeto busca validar circuitos lógicos digitais através de **expressões bo
 │-- 📂 src
 │   ├── 📂 Circuitos # Definição de circuitos e expressões booleanas
 │   ├── 📂 Verificações # Implementação das verificações com Z3 e manipulação booleana
+│   ├── 📂 Simplificões # Simplificações dos circuitos e expressões lógicas
 │   ├── 📂 Testes # Casos de teste para validar circuitos
 │-- 📂 docs
 │   ├── 📜 relatorio.pdf  # Relatório técnico do projeto
