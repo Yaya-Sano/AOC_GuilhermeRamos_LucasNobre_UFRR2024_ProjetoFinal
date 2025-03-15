@@ -1,21 +1,20 @@
 from z3 import *
 
-# Definição das variáveis booleanas
+# Definir variáveis booleanas
 x, y, z = Bools('x y z')
 
-# Definição da fórmula lógica
-F = Or(
-    And(Not(x) | y, Not(Or(y, And(x, Not(z))))),
-    And(x, Not(And(y, z)))
-)
+# Expressão booleana do circuito
+F = Or(And(Or(Not(x), y), Not(And(y, And(x, Not(z))))), And(x, Not(And(y, z))))
 
-# Criando um solver
+# Solver para verificar a especificação
 solver = Solver()
-solver.add(F == True)
 
-# Verificando a satisfatibilidade da função
+# Exemplo de validação de saída: A saída deve ser verdadeira quando x=True, y=True, z=False
+solver.add(Not(F))  # Verificar se F é falso para a condição especificada
+solver.add(x == True, y == True, z == False)
+
+# Resultado da verificação
 if solver.check() == sat:
-    print("A fórmula é satisfatível. Um modelo possível:")
-    print(solver.model())
+    print("A especificação falhou.")
 else:
-    print("A fórmula é insatisfatível.")
+    print("A especificação foi atendida.")
