@@ -40,6 +40,6 @@ solver.add(C_out_completo == C_out_simplificado)  # O carry final também deve s
 
 # Verificar se a equivalência é atendida
 if solver.check() == sat:
-    print("Os circuitos NÃO são equivalentes.")
+    print("Os circuitos NÃO são equivalentes. A redundância não pode ser removida.")
 else:
-    print("Os circuitos são equivalentes.")
+    print("Os circuitos são equivalentes. A redundância pode ser removida.")
