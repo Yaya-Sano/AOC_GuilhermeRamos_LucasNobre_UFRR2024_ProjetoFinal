@@ -1,36 +1,36 @@
 from z3 import *
 
-# Definir variáveis booleanas
+# Definir variáveis A, B, C, D
 A, B, C, D = Bools('A B C D')
 
-# Expressão booleana completa
-F_completa = Or(
-    And(A, B, C, D),  # ABCD
-    And(A, B, Not(C), D),  # ABC'D
-    And(A, B, Not(C), Not(D)),  # ABC'D'
-    And(A, Not(B), C, D),  # AB'CD
-    And(Not(A), B, C, D),  # A'BCD
-    And(Not(A), B, C, Not(D)),  # A'BCD'
-    And(Not(A), B, Not(C), D),  # A'BC'D
-    And(Not(A), Not(B), Not(C), D)  # A'B'C'D
+# Circuito original (com redundância)
+F_original = Or(
+    And(A, B, C, D),              # ABCD
+    And(A, B, Not(C), D),         # ABC'D
+    And(A, B, Not(C), Not(D)),    # ABC'D'
+    And(A, Not(B), C, D),         # AB'CD
+    And(Not(A), B, C, D),         # A'BCD
+    And(Not(A), B, C, Not(D)),    # A'BCD'
+    And(Not(A), B, Not(C), D),    # A'BC'D
+    And(Not(A), Not(B), Not(C), D) # A'B'C'D
 )
 
-# Expressão booleana simplificada fornecida
-F_simplificada = Or(
-    And(A, C, D),  # A ∧ C ∧ D
-    And(A, B, Not(C)),  # A ∧ B ∧ ¬C
-    And(B, C, Not(A)),  # B ∧ C ∧ ¬A
-    And(D, Not(A), Not(C))  # D ∧ ¬A ∧ ¬C
+# Circuito simplificado (sem redundância)
+F_simplificado = Or(
+    And(A, C, D),                # A ∧ C ∧ D
+    And(A, B, Not(C)),           # A ∧ B ∧ ¬C
+    And(B, C, Not(A)),           # B ∧ C ∧ ¬A
+    And(D, Not(A), Not(C))       # D ∧ ¬A ∧ ¬C
 )
 
-# Resolver para verificar a equivalência entre a expressão completa e simplificada
+# Solver para verificar equivalência
 solver = Solver()
 
-# Adicionar a condição de inequivalência
-solver.add(F_completa != F_simplificada)
+# Adicionar condição de inequivalência (se forem diferentes, há um problema)
+solver.add(F_original != F_simplificado)
 
-# Verificar a equivalência
+# Verificar
 if solver.check() == sat:
-    print("As expressões completa e simplificada NÃO são equivalentes.")
+    print("Os circuitos NÃO são equivalentes. A redundância não pode ser removida.")
 else:
-    print("As expressões completa e simplificada SÃO equivalentes.")
+    print("Os circuitos são equivalentes. A redundância pode ser removida.")
