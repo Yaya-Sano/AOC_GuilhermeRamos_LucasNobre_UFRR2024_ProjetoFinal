@@ -1,24 +1,26 @@
 from z3 import *
 
-# Definir variáveis booleanas
+# Definir variáveis A, B, C, D
 A, B, C, D = Bools('A B C D')
 
-# Expressão booleana simplificada
-F_simplificada = Or(
-    And(A, C, D),  # A ∧ C ∧ D
-    And(A, B, Not(C)),  # A ∧ B ∧ ¬C
-    And(B, C, Not(A)),  # B ∧ C ∧ ¬A
-    And(D, Not(A), Not(C))  # D ∧ ¬A ∧ ¬C
+# Expressão booleana simplificada do circuito
+F = Or(
+    And(A, C, D),              # A ∧ C ∧ D
+    And(A, B, Not(C)),         # A ∧ B ∧ ¬C
+    And(B, C, Not(A)),         # B ∧ C ∧ ¬A
+    And(D, Not(A), Not(C))     # D ∧ ¬A ∧ ¬C
 )
 
-# Solver para verificar a expressão
+# Solver para verificar a especificação
 solver = Solver()
 
-# Adicionar a expressão booleana simplificada
-solver.add(F_simplificada)
+# Especificação: A saída deve ser verdadeira para uma condição específica
+# Exemplo: Verificar se a expressão é verdadeira quando A=True, B=True, C=False, D=True
+solver.add(Not(F))  # Verificar se F é falso para a condição especificada
+solver.add(A == True, B == True, C == False, D == True)
 
-# Verificar se a expressão é satisfatível
+# Resultado da verificação
 if solver.check() == sat:
-    print("A expressão é satisfatível.")
+    print("A especificação falhou.")
 else:
-    print("A expressão não é satisfatível.")
+    print("A especificação foi atendida.")
