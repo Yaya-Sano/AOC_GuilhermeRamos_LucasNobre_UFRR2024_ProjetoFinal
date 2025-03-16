@@ -1,43 +1,40 @@
 from z3 import *
 
-# Definir variáveis para os sinais de controle
-RegDst, ALUOp, MemRead, MemWrite, RegWrite, ALUSrc = Bools('RegDst ALUOp MemRead MemWrite RegWrite ALUSrc')
+# Definindo os sinais de controle e os estados (exemplo simplificado)
+PCWrite   = Bool('PCWrite')
+IRWrite   = Bool('IRWrite')
+MemRead   = Bool('MemRead')
+MemWrite  = Bool('MemWrite')
+RegDst    = Bool('RegDst')
+RegWrite  = Bool('RegWrite')
+MemtoReg  = Bool('MemtoReg')
+ALUSrcA   = Bool('ALUSrcA')
+ALUSrcB   = Bool('ALUSrcB')
+ALUOp_add = Bool('ALUOp_add')
+ALUOp_sub = Bool('ALUOp_sub')
 
-# Função para a unidade de controle simplificada
-def unidade_controle_simplificada(instrucao):
-    # Exemplo de simplificação de estados, onde definimos um conjunto menor de sinais para controle
-    if instrucao == "ADD":
-        return And(RegDst, RegWrite, ALUOp)
-    elif instrucao == "LW":
-        return And(MemRead, MemWrite, RegWrite, ALUSrc)
-    elif instrucao == "SW":
-        return And(MemWrite, ALUSrc)
-    else:
-        return False
+# Estados da UC (exemplo simplificado: IF e ID)
+estado_IF = Bool('estado_IF')
+estado_ID = Bool('estado_ID')
 
-# Função para a unidade de controle completa
-def unidade_controle_completa(instrucao):
-    # Exemplo mais detalhado, com todos os sinais de controle definidos
-    if instrucao == "ADD":
-        return And(RegDst, ALUOp, RegWrite, Not(ALUSrc))
-    elif instrucao == "LW":
-        return And(MemRead, RegWrite, ALUSrc)
-    elif instrucao == "SW":
-        return And(MemWrite, ALUSrc)
-    else:
-        return False
-
-# Definir a instrução que estamos verificando
-instrucao = "ADD"  # Substitua pela instrução desejada para teste
-
-# Verificar a equivalência entre a unidade de controle simplificada e a completa
 solver = Solver()
 
-# Verificar se ambas as unidades de controle geram os mesmos sinais para a instrução
-solver.add(unidade_controle_simplificada(instrucao) == unidade_controle_completa(instrucao))
+# Suponha que, no estado IF, somente MemRead e IRWrite devam ser True:
+solver.add(Implies(estado_IF, MemRead == True))
+solver.add(Implies(estado_IF, IRWrite == True))
+solver.add(Implies(estado_IF, And(PCWrite == False, RegWrite == False, MemWrite == False, RegDst == False, MemtoReg == False, ALUSrcA == False, ALUSrcB == False, ALUOp_add == False, ALUOp_sub == False)))
+solver.add(estado_IF == True)  # Inicia no estado IF
 
-# Verificar a equivalência
+# Verificação: se algum sinal não estiver conforme especificado, a restrição Not(F) (ou equivalente) poderá detectar.
+# (Aqui, você define F como a conjunção das condições esperadas, e testa se Not(F) é sat.)
+F_IF = And(MemRead, IRWrite,
+           Not(PCWrite), Not(RegWrite), Not(MemWrite),
+           Not(RegDst), Not(MemtoReg), Not(ALUSrcA),
+           Not(ALUSrcB), Not(ALUOp_add), Not(ALUOp_sub))
+
+solver.add(Not(F_IF))
+# Se houver um modelo para essas restrições, a especificação foi violada
 if solver.check() == sat:
-    print(f"As unidades de controle (completa e simplificada) são equivalentes para a instrução {instrucao}.")
+    print("A especificação no estado IF falhou.")
 else:
-    print(f"As unidades de controle (completa e simplificada) NÃO são equivalentes para a instrução {instrucao}.")
+    print("A especificação no estado IF foi atendida.")
