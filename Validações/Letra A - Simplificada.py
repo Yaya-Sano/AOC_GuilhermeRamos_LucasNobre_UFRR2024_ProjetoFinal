@@ -4,7 +4,7 @@ from z3 import *
 x, y, z = Bools('x y z')
 
 # Expressão booleana simplificada
-F_simplificado = Or(And(Or(Not(x), y), Not(And(x, z))), And(x, Not(And(y, z))))
+F_simplificado = Or(Not(y), And(x, Not(z)))
 
 # Solver para verificar a especificação
 solver = Solver()
