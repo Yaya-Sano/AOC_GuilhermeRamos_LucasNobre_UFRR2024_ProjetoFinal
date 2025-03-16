@@ -1,36 +1,47 @@
 from z3 import *
 
-# Definir variáveis booleanas para os 8 bits de A, B e C_in
-A = [Bools(f'A{i}') for i in range(8)]
-B = [Bools(f'B{i}') for i in range(8)]
-C_in = Bools('C_in')
+# Criando variáveis booleanas para os bits de entrada e carry-in
+A = [Bool(f'A{i}') for i in range(8)]
+B = [Bool(f'B{i}') for i in range(8)]
+C_in = Bool('C_in')
 
-# Definir variáveis booleanas para os 8 bits de soma S e carry out
-S = [Bools(f'S{i}') for i in range(8)]
-C_out = Bools('C_out')
+# Criando variáveis para a soma e carry-out
+S = [Bool(f'S{i}') for i in range(8)]
+C_out = Bool('C_out')
 
-# Função para somador completo simplificado de 1 bit (simplificado)
-def somador_completo_simplificado(Ai, Bi, Cin):
-    # Soma
-    S = Xor(Xor(Ai, Bi), Cin)
-    # Carry simplificado, exemplo com menos gates
-    C = Or(And(Ai, Bi), And(Bi, Cin))  
-    return S, C
-
-# Equações para o somador completo de 8 bits simplificado
-S_eq_simplificado = [somador_completo_simplificado(A[i], B[i], C_in if i == 0 else C_out[i-1])[0] for i in range(8)]
-C_out_eq_simplificado = [somador_completo_simplificado(A[i], B[i], C_in if i == 0 else C_out[i-1])[1] for i in range(8)]
-
-# Solver para verificar a equivalência
+# Definindo o solver
 solver = Solver()
 
-# Adicionar as equações para os somadores simplificados
+# Implementação do somador completo de 8 bits simplificado
+C = C_in  # Carry inicial
 for i in range(8):
-    solver.add(S[i] == S_eq_simplificado[i])
-solver.add(C_out == C_out_eq_simplificado[7])  # Verificar o carry final
+    # Soma de cada bit (simplificada diretamente usando XOR)
+    solver.add(S[i] == Xor(A[i], B[i], C))
+    # Atualização do Carry para a próxima iteração (simplificação do carry)
+    C = Or(And(A[i], B[i]), And(C, Xor(A[i], B[i])))
 
-# Verificar se a equivalência é verdadeira
+# Definir a saída final do carry
+solver.add(C_out == C)
+
+# Testando uma entrada específica: A = 10101010, B = 01010101, C_in = 0
+entrada_A = [True, False, True, False, True, False, True, False]  # 170 em binário
+entrada_B = [False, True, False, True, False, True, False, True]  # 85 em binário
+carry_inicial = False
+
+# Adicionando as restrições das entradas ao solver
+for i in range(8):
+    solver.add(A[i] == entrada_A[i])
+    solver.add(B[i] == entrada_B[i])
+
+solver.add(C_in == carry_inicial)
+
+# Verificando a especificação
 if solver.check() == sat:
-    print("A expressão simplificada foi modelada corretamente.")
+    modelo = solver.model()
+    soma_resultante = ''.join(['1' if modelo.evaluate(S[i]) else '0' for i in range(8)])
+    carry_out_resultante = modelo.evaluate(C_out)
+    
+    print(f"Soma: {soma_resultante} (binário)")
+    print(f"Carry-out: {carry_out_resultante}")
 else:
-    print("A expressão simplificada não foi modelada corretamente.")
+    print("A especificação falhou.")
