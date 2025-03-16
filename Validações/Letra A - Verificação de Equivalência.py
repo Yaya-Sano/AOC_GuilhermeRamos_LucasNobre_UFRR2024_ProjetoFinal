@@ -4,18 +4,19 @@ from z3 import *
 x, y, z = Bools('x y z')
 
 # Expressão booleana completa
-F_completa = Or(And(Or(Not(x), y), Not(And(y, And(x, Not(z))))), And(x, Not(And(y, z))))
+F_completa = Or(
+    And(Or(Not(x), y), Not(Or(y, And(x, Not(z))))),
+    And(x, Not(And(y, z)))
+)
 
-# Expressão booleana simplificada
-F_simplificada = Or(And(Or(Not(x), y), Not(And(x, z))), And(x, Not(And(y, z))))
+# Expressão booleana simplificada proposta
+F_simplificada = Or(Not(y), And(x, Not(z)))
 
 # Solver para verificar equivalência
 solver = Solver()
-
-# Adicionar condição de inequivalência (se forem diferentes, há um problema)
 solver.add(F_completa != F_simplificada)
 
-# Verificar
+# Verificar a equivalência
 if solver.check() == sat:
     print("Os circuitos NÃO são equivalentes. A redundância não pode ser removida.")
 else:
