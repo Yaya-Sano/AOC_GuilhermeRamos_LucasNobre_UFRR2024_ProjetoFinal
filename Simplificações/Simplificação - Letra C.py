@@ -1,4 +1,4 @@
-from sympy import symbols, simplify_logic, Or, And, Not
+from sympy import symbols, simplify, simplify_logic, And, Or, Not
 
 def format_expr(expr, top=True):
     """
@@ -22,127 +22,84 @@ def format_expr(expr, top=True):
     else:
         return str(expr)
 
-def somador_completo_1bit(x, y, cin):
-    """
-    Implementa um full adder de 1 bit.
-    A soma é calculada como:
-      S = (¬x ʌ ¬y ʌ cin) v (¬x ʌ y ʌ ¬cin) v (x ʌ ¬y ʌ ¬cin) v (x ʌ y ʌ cin)
-    O carry-out é:
-      Cout = (x ʌ y) v (x ʌ cin) v (y ʌ cin)
-    """
-    S = Or(
-        And(Not(x), Not(y), cin),
-        And(Not(x), y, Not(cin)),
-        And(x, Not(y), Not(cin)),
-        And(x, y, cin)
-    )
-    Cout = Or(And(x, y), And(x, cin), And(y, cin))
-    return S, Cout
-
-def somador_8bits(X, Y, Cin_val):
-    """
-    Constrói um somador completo de 8 bits.
-    X e Y são listas de 8 bits; Cin_val é o carry-in.
-    Retorna:
-      - S: lista de 8 bits de soma
-      - Cout: carry-out final
-    """
-    S = []
-    C = [Cin_val]
-    for i in range(8):
-        s, cout = somador_completo_1bit(X[i], Y[i], C[i])
-        S.append(s)
-        C.append(cout)
-    return S, C[-1]
-
-def ula_8bits():
-    """
-    Constrói a ULA de 8 bits com as seguintes operações:
-      - Subtração: A - B, implementada como A + (¬B) + 1.
-      - XOR: bitwise, S[i] = A[i] XOR B[i]
-      - NAND: bitwise, S[i] = ¬(A[i] ʌ B[i])
-      - NOR: bitwise, S[i] = ¬(A[i] v B[i])
-      - Shift Left 2: S[i] = A[i-2] (para i>=2), 0 para i = 0,1.
-    """
-    # Define os 8 bits dos operandos A e B
-    A = [symbols(f'A{i}') for i in range(8)]
-    B = [symbols(f'B{i}') for i in range(8)]
+def unidade_controle():
+    # Definindo os bits de estado (usamos 3 bits para representar 5 estados)
+    S2, S1, S0 = symbols('S2 S1 S0')
     
-    # Subtração: usar complemento de 2, isto é, calcular A + (¬B) + 1.
-    NotB = [Not(b) for b in B]
-    S_sub, Cout_sub = somador_8bits(A, NotB, True)  # Cin = True representa +1
+    # Estados (exemplo simplificado):
+    IF  = And(Not(S2), Not(S1), Not(S0))  # Busca de Instrução
+    ID  = And(Not(S2), Not(S1), S0)         # Decodificação e Leitura
+    EX  = And(Not(S2), S1, Not(S0))         # Execução
+    MEM = And(Not(S2), S1, S0)              # Acesso à Memória
+    WB  = And(S2, Not(S1), Not(S0))         # Escrita no Registrador
     
-    # XOR: bitwise
-    S_xor = [Or(And(A[i], Not(B[i])), And(Not(A[i]), B[i])) for i in range(8)]
+    # Sinais que identificam o tipo de instrução (apenas um deve ser 1)
+    R, LW, SW, BEQ = symbols('R LW SW BEQ')
     
-    # NAND: bitwise = ¬(A[i] ʌ B[i])
-    S_nand = [Not(And(A[i], B[i])) for i in range(8)]
+    # Sinais de controle – definidos de forma simplificada:
+    PCWrite   = IF                                  # Atualiza PC somente em IF
+    IRWrite   = IF                                  # Grava a instrução somente em IF
+    MemRead   = IF                                  # Leitura de memória durante IF
+    MemWrite  = And(MEM, SW)                        # Escrita na memória: estado MEM e SW=1
+    RegDst    = And(WB, R)                          # Escolhe rd (instrução R) em WB
+    RegWrite  = And(WB, Or(R, LW))                  # Escrita no registrador em WB para R ou LW
+    MemtoReg  = And(WB, LW)                         # Seleciona dado da memória em LW
+    ALUSrcA   = EX                                  # Usa dado do registrador na EX
+    ALUSrcB   = ID                                  # Usa dado imediato ou PC+4 em ID
+    ALUOp_add = And(EX, Or(LW, SW))                 # Para lw/sw, ALU realiza adição
+    ALUOp_sub = And(EX, BEQ)                        # Para beq, ALU realiza subtração
+    ALUOp_r   = And(EX, R)                          # Para instrução R, operação definida pelo campo funct
     
-    # NOR: bitwise = ¬(A[i] v B[i])
-    S_nor = [Not(Or(A[i], B[i])) for i in range(8)]
-    
-    # Shift Left 2 bits: desloca A 2 posições para a esquerda
-    S_shift = []
-    for i in range(8):
-        if i < 2:
-            S_shift.append(False)  # 0
-        else:
-            S_shift.append(A[i-2])
-    
-    return {
-        'A': A,
-        'B': B,
-        'Subtraction': (S_sub, Cout_sub),
-        'XOR': S_xor,
-        'NAND': S_nand,
-        'NOR': S_nor,
-        'ShiftLeft2': S_shift
+    sinais_controle = {
+        'PCWrite':   PCWrite,
+        'IRWrite':   IRWrite,
+        'MemRead':   MemRead,
+        'MemWrite':  MemWrite,
+        'RegDst':    RegDst,
+        'RegWrite':  RegWrite,
+        'MemtoReg':  MemtoReg,
+        'ALUSrcA':   ALUSrcA,
+        'ALUSrcB':   ALUSrcB,
+        'ALUOp_add': ALUOp_add,
+        'ALUOp_sub': ALUOp_sub,
+        'ALUOp_r':   ALUOp_r
     }
+    
+    estados = {
+        'IF': IF,
+        'ID': ID,
+        'EX': EX,
+        'MEM': MEM,
+        'WB': WB
+    }
+    
+    return sinais_controle, estados, (S2, S1, S0), (R, LW, SW, BEQ)
 
 def main():
-    ops = ula_8bits()
+    sinais, estados, state_bits, instr_types = unidade_controle()
+    S2, S1, S0 = state_bits
+    R, LW, SW, BEQ = instr_types
     
+    print("Unidade de Controle do Processador Multiciclo MIPS (FSM):\n")
     
-    print("🔍 ULA de 8 bits - Operações e Expressões Simplificadas:\n")
+    print("Estados:")
+    for nome, estado in estados.items():
+        # Tenta simplificar cada estado
+        estado_simpl = simplify_logic(estado, form='cnf')
+        print(f"{nome}: {format_expr(simplify(estado_simpl))}")
     
-    # Subtração
-    S_sub, Cout_sub = ops['Subtraction']
-    print("Subtração (A - B):")
-    for i in range(8):
-        expr = simplify_logic(S_sub[i], form='dnf')
-        print(f"Bit {i}: {format_expr(expr)}")
-    print(f"Cout (borrow/carry): {format_expr(simplify_logic(Cout_sub, form='dnf'))}\n")
+    print("\nSinais de Controle:")
+    for sig, expr in sinais.items():
+        # Primeiro, simplifica usando simplify_logic (forma CNF)
+        expr_simpl = simplify_logic(expr, form='cnf')
+        # Depois, aplica simplify() para tentar compactar ainda mais
+        expr_compacto = simplify(expr_simpl)
+        print(f"{sig} (original): {format_expr(expr)}")
+        print(f"{sig} (simplificado): {format_expr(expr_compacto)}\n")
     
-    # XOR
-    print("XOR (A XOR B):")
-    for i in range(8):
-        expr = simplify_logic(ops['XOR'][i], form='dnf')
-        print(f"Bit {i}: {format_expr(expr)}")
-    print()
-    
-    # NAND
-    print("NAND (A NAND B):")
-    for i in range(8):
-        expr = simplify_logic(ops['NAND'][i], form='dnf')
-        print(f"Bit {i}: {format_expr(expr)}")
-    print()
-    
-    # NOR
-    print("NOR (A NOR B):")
-    for i in range(8):
-        expr = simplify_logic(ops['NOR'][i], form='dnf')
-        print(f"Bit {i}: {format_expr(expr)}")
-    print()
-    
-    # Shift Left 2 bits
-    print("Shift Left 2 bits (A << 2):")
-    for i in range(8):
-        expr = ops['ShiftLeft2'][i]
-        # Se for o valor False, considere como 0.
-        if expr is False:
-            print(f"Bit {i}: 0")
-        else:
-            print(f"Bit {i}: {format_expr(expr)}")
+    print("Observação:")
+    print("R, LW, SW, BEQ representam os sinais que identificam o tipo de instrução.")
+    print("Exemplo: Para uma instrução do tipo R, R = 1 e LW, SW, BEQ = 0.")
 
 if __name__ == '__main__':
     main()
