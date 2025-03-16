@@ -92,10 +92,8 @@ def main():
     for sig, expr in sinais.items():
         # Primeiro, simplifica usando simplify_logic (forma CNF)
         expr_simpl = simplify_logic(expr, form='cnf')
-        # Depois, aplica simplify() para tentar compactar ainda mais
-        expr_compacto = simplify(expr_simpl)
         print(f"{sig} (original): {format_expr(expr)}")
-        print(f"{sig} (simplificado): {format_expr(expr_compacto)}\n")
+        print(f"{sig} (simplificado): {format_expr(expr_simpl)}\n")
     
     print("Observação:")
     print("R, LW, SW, BEQ representam os sinais que identificam o tipo de instrução.")
