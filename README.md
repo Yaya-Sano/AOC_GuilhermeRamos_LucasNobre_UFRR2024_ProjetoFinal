@@ -12,13 +12,11 @@ O projeto busca validar circuitos lógicos digitais através de expressões bool
 - Python 3.x
 - Z3 Solver (z3-solver)
 - Manipulação de Expressões Booleanas (com Python)
-- **SimPy** (para simulação de processos de sistemas discretos e análise de desempenho)
-- Jupyter Notebook (opcional para experimentação interativa)
+- SymPy (para manipulação simbólica de expressões matemáticas e booleanas)
 
 ## 📂 Estrutura do Projeto
 
 ```plaintext
-📁 circuitos-logicos-z3
 📜 README.md
 📜 requirements.txt
 📂 src
@@ -38,7 +36,7 @@ O projeto busca validar circuitos lógicos digitais através de expressões bool
 
 ```bash
 git clone https://github.com/Yaya-Sano/AOC_GuilhermeRamos_LucasNobre_UFRR2024_ProjetoFinal.git
-cd circuitos-logicos-z3
+
 ```
 
 ### 2️⃣ Criar um Ambiente Virtual (opcional)
@@ -46,21 +44,24 @@ cd circuitos-logicos-z3
 ```bash
 python -m venv venv
 source venv/bin/activate  # Linux/macOS
-venv\Scriptsctivate  # Windows
+venv\Scripts\activate  # Windows
 ```
 
 ### 3️⃣ Instalar Dependências
 
-Instale as dependências necessárias, incluindo **SimPy**, utilizando o comando abaixo:
+Opção 1: Usando o requirements.txt
+Caso prefira, instale todas as dependências de uma vez com o arquivo requirements.txt:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-**Certifique-se de que a biblioteca SimPy está listada no `requirements.txt`.** Caso contrário, adicione:
+Opção 2: Instalando as bibliotecas diretamente
+Você também pode instalar as bibliotecas individualmente utilizando os seguintes comandos:
+```bash
+pip install z3-solver  # Instalar a biblioteca Z3 Solver
+pip install sympy      # Instalar a biblioteca SymPy
 
-```plaintext
-simpy==<versão>
 ```
 
 ### 4️⃣ Executar Exemplos
@@ -82,10 +83,6 @@ python -m unittest src/testes.py
 ## 📖 Relatório
 
 O relatório técnico completo pode ser encontrado em `docs/relatorio.pdf`.
-
-## 📜 Licença
-
-Este projeto é de código aberto sob a licença MIT.
 
 ## 🔹 Autores
 
