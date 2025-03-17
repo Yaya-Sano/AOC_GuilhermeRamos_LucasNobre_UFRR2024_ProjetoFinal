@@ -9,7 +9,7 @@ O projeto busca validar circuitos lógicos digitais através de expressões bool
 
 ## 🛠 Tecnologias Utilizadas
 
-- Python 3.x
+- Python
 - Z3 Solver (z3-solver)
 - Manipulação de Expressões Booleanas (com Python)
 - SymPy (para manipulação simbólica de expressões matemáticas e booleanas)
@@ -19,15 +19,11 @@ O projeto busca validar circuitos lógicos digitais através de expressões bool
 ```plaintext
 📜 README.md
 📜 requirements.txt
-📂 src
-├── 📂 Circuitos  # Definição de circuitos e expressões booleanas
-├── 📂 Verificações  # Implementação das verificações com Z3 e manipulação booleana
-├── 📂 Simplificações  # Simplificações dos circuitos e expressões lógicas
-├── 📂 Testes  # Casos de teste para validar circuitos
+📂 Circuitos  # Definição de circuitos e expressões booleanas
+📂 Verificações  # Implementação das verificações com Z3 e manipulação booleana
+📂 Simplificações  # Simplificações dos circuitos e expressões lógicas
 📂 docs
 ├── 📜 relatorio.pdf  # Relatório técnico do projeto
-📂 exemplos
-├── 📜 exemplo_somador.py  # Teste de um somador binário
 ```
 
 ## 🚀 Instalação e Uso
@@ -62,22 +58,6 @@ Você também pode instalar as bibliotecas individualmente utilizando os seguint
 pip install z3-solver  # Instalar a biblioteca Z3 Solver
 pip install sympy      # Instalar a biblioteca SymPy
 
-```
-
-### 4️⃣ Executar Exemplos
-
-Para rodar o exemplo de um somador binário:
-
-```bash
-python exemplos/exemplo_somador.py
-```
-
-### 5️⃣ Executar Testes
-
-Para rodar os testes e verificar circuitos:
-
-```bash
-python -m unittest src/testes.py
 ```
 
 ## 📖 Relatório
