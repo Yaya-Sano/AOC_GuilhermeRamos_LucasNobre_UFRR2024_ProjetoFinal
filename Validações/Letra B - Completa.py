@@ -16,8 +16,10 @@ solver = Solver()
 C = C_in  # Carry inicial
 for i in range(8):
     # Soma de cada bit
+    # Soma (S) = A XOR B XOR Cin
     solver.add(S[i] == Xor(A[i], B[i], C))
     # Atualização do Carry para a próxima iteração
+    # Carry de saída (Cout) = (A AND B) OR (Cin AND (A XOR B))
     C = Or(And(A[i], B[i]), And(C, Xor(A[i], B[i])))
 
 # Definir a saída final do carry
