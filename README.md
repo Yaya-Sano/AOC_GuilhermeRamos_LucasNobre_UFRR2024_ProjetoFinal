@@ -23,7 +23,7 @@ O projeto busca validar circuitos lógicos digitais através de expressões bool
 📂 Verificações  # Implementação das verificações com Z3 e manipulação booleana
 📂 Simplificações  # Simplificações dos circuitos e expressões lógicas
 📂 docs
-├── 📜 relatorio.pdf  # Relatório técnico do projeto
+├── 📜 relatório.pdf  # Relatório técnico do projeto
 ```
 
 ## 🚀 Instalação e Uso
