@@ -1,65 +1,70 @@
 from z3 import *
 
-# Definir variáveis de estado e opcode
-S2, S1, S0 = Bools('S2 S1 S0')  # Bits de estado
-Op5, Op4, Op3, Op2, Op1, Op0 = Bools('Op5 Op4 Op3 Op2 Op1 Op0')  # Bits do opcode
+# Definindo as variáveis
+Op0, Op1, Op2, Op3, Op4, Op5 = Bools('Op0 Op1 Op2 Op3 Op4 Op5')
+S0, S1, S2 = Bools('S0 S1 S2')
 
-# Definir variáveis de saída (sinais de controle)
-RegDst, ALUSrc, MemtoReg, RegWrite, MemRead, MemWrite, Branch, ALUOp1, ALUOp0, Jump = Bools(
-    'RegDst ALUSrc MemtoReg RegWrite MemRead MemWrite Branch ALUOp1 ALUOp0 Jump'
-)
-
-# Expressão booleana completa (original)
-RegDst_completo = And(Not(S2), S1, Not(S0), Not(Op5), Not(Op4), Not(Op3), Not(Op2), Not(Op1), Not(Op0))
-ALUSrc_completo = And(Not(S2), S1, Not(S0), Or(
+# Expressão 1
+RegDst_expr_1 = And(Not(S2), S1, Not(S0), Not(Op5), Not(Op4), Not(Op3), Not(Op2), Not(Op1), Not(Op0))
+ALUSrc_expr_1 = And(Not(S2), S1, Not(S0), Or(
     And(Not(Op5), Not(Op4), Not(Op3), Op2, Op1, Op0),  # LW
     And(Not(Op5), Not(Op4), Op3, Not(Op2), Not(Op1), Not(Op0))  # SW ou ADDI
 ))
-MemtoReg_completo = And(Not(S2), Not(S1), S0, Not(Op5), Not(Op4), Not(Op3), Op2, Op1, Op0)  # LW
-RegWrite_completo = And(S2, Not(S1), Not(S0), Or(
+MemtoReg_expr_1 = And(Not(S2), Not(S1), S0, Not(Op5), Not(Op4), Not(Op3), Op2, Op1, Op0)  # LW
+RegWrite_expr_1 = And(S2, Not(S1), Not(S0), Or(
     And(Not(Op5), Not(Op4), Not(Op3), Not(Op2), Not(Op1), Not(Op0)),  # R-type
     And(Not(Op5), Not(Op4), Not(Op3), Op2, Op1, Op0),  # LW
     And(Not(Op5), Not(Op4), Op3, Not(Op2), Not(Op1), Not(Op0))  # ADDI
 ))
-MemRead_completo = Or(
+MemRead_expr_1 = Or(
     And(Not(S2), Not(S1), Not(S0)),  # Fetch
     And(Not(S2), Not(S1), S0, Not(Op5), Not(Op4), Not(Op3), Op2, Op1, Op0)  # LW
 )
-MemWrite_completo = And(Not(S2), Not(S1), S0, Not(Op5), Not(Op4), Op3, Not(Op2), Not(Op1), Not(Op0))  # SW
-Branch_completo = And(Not(S2), S1, Not(S0), Not(Op5), Not(Op4), Not(Op3), Not(Op2), Op1, Not(Op0))  # BEQ
-ALUOp1_completo = And(Not(S2), S1, Not(S0), Not(Op5), Not(Op4), Not(Op3), Not(Op2), Not(Op1), Not(Op0))  # R-type
-ALUOp0_completo = And(Not(S2), S1, Not(S0), Not(Op5), Not(Op4), Not(Op3), Not(Op2), Op1, Not(Op0))  # BEQ
-Jump_completo = And(Not(S2), S1, Not(S0), Not(Op5), Not(Op4), Not(Op3), Not(Op2), Op1, Op0)  # J
+MemWrite_expr_1 = And(Not(S2), Not(S1), S0, Not(Op5), Not(Op4), Op3, Not(Op2), Not(Op1), Not(Op0))  # SW
+Branch_expr_1 = And(Not(S2), S1, Not(S0), Not(Op5), Not(Op4), Not(Op3), Not(Op2), Op1, Not(Op0))  # BEQ
+ALUOp1_expr_1 = And(Not(S2), S1, Not(S0), Not(Op5), Not(Op4), Not(Op3), Not(Op2), Not(Op1), Not(Op0))  # R-type
+ALUOp0_expr_1 = And(Not(S2), S1, Not(S0), Not(Op5), Not(Op4), Not(Op3), Not(Op2), Op1, Not(Op0))  # BEQ
+Jump_expr_1 = And(Not(S2), S1, Not(S0), Not(Op5), Not(Op4), Not(Op3), Not(Op2), Op1, Op0)  # J
 
-# Expressão booleana simplificada (hipotética)
-RegDst_simplificado = And(S1, Not(S0), Not(Op0))
-ALUSrc_simplificado = And(S1, Or(Op2, Op1))
-MemtoReg_simplificado = And(S0, Op2, Op1)
-RegWrite_simplificado = Or(And(Not(S2), Not(S1), Not(S0)), And(S1, Op0))
-MemRead_simplificado = Or(And(Not(S2), Not(S1), Not(S0)), And(S0, Op2, Op1))
-MemWrite_simplificado = And(S0, Not(Op3), Not(Op2))
-Branch_simplificado = And(S1, Not(Op1), Not(Op0))
-ALUOp1_simplificado = And(S1, Not(Op0))
-ALUOp0_simplificado = And(S1, Not(Op1))
-Jump_simplificado = And(S1, Op1, Op0)
+# Expressão 2
+RegDst_expr_2 = And(S1, Not(Op0), Not(Op1), Not(Op2), Not(Op3), Not(Op4), Not(Op5), Not(S0), Not(S2))
+ALUSrc_expr_2 = And(S1, Not(S0), Not(S2), Or(
+    And(Op0, Op1, Op2, Not(Op3), Not(Op4), Not(Op5)),  # R-type
+    And(Op3, Not(Op0), Not(Op1), Not(Op2), Not(Op4), Not(Op5))  # SW, ADDI
+))
+MemtoReg_expr_2 = And(Op0, Op1, Op2, S0, Not(Op3), Not(Op4), Not(Op5), Not(S1), Not(S2))  # LW
+RegWrite_expr_2 = And(S2, Not(S0), Not(S1), Or(
+    And(Op0, Op1, Op2, Not(Op3), Not(Op4), Not(Op5)),  # R-type
+    And(Op3, Not(Op0), Not(Op1), Not(Op2), Not(Op4), Not(Op5)),  # SW, ADDI
+    And(Not(Op0), Not(Op1), Not(Op2), Not(Op3), Not(Op4), Not(Op5))  # R-type
+))
+MemRead_expr_2 = Or(
+    And(Not(S0), Not(S1), Not(S2)),  # Fetch
+    And(Op0, Op1, Op2, S0, Not(Op3), Not(Op4), Not(Op5), Not(S1), Not(S2))  # LW
+)
+MemWrite_expr_2 = And(Op3, S0, Not(Op0), Not(Op1), Not(Op2), Not(Op4), Not(Op5), Not(S1), Not(S2))  # SW
+Branch_expr_2 = And(Op1, S1, Not(Op0), Not(Op2), Not(Op3), Not(Op4), Not(Op5), Not(S0), Not(S2))  # BEQ
+ALUOp1_expr_2 = And(S1, Not(Op0), Not(Op1), Not(Op2), Not(Op3), Not(Op4), Not(Op5), Not(S0), Not(S2))  # R-type
+ALUOp0_expr_2 = And(Op1, S1, Not(Op0), Not(Op2), Not(Op3), Not(Op4), Not(Op5), Not(S0), Not(S2))  # BEQ
+Jump_expr_2 = And(Op0, Op1, S1, Not(Op2), Not(Op3), Not(Op4), Not(Op5), Not(S0), Not(S2))  # J
 
-# Solver para verificar equivalência
+# Criando o solver Z3
 solver = Solver()
 
-# Adicionar condição de inequivalência (se forem diferentes, há um problema)
-solver.add(RegDst_completo != RegDst_simplificado)
-solver.add(ALUSrc_completo != ALUSrc_simplificado)
-solver.add(MemtoReg_completo != MemtoReg_simplificado)
-solver.add(RegWrite_completo != RegWrite_simplificado)
-solver.add(MemRead_completo != MemRead_simplificado)
-solver.add(MemWrite_completo != MemWrite_simplificado)
-solver.add(Branch_completo != Branch_simplificado)
-solver.add(ALUOp1_completo != ALUOp1_simplificado)
-solver.add(ALUOp0_completo != ALUOp0_simplificado)
-solver.add(Jump_completo != Jump_simplificado)
+# Comparando as expressões
+solver.add(RegDst_expr_1 == RegDst_expr_2)
+solver.add(ALUSrc_expr_1 == ALUSrc_expr_2)
+solver.add(MemtoReg_expr_1 == MemtoReg_expr_2)
+solver.add(RegWrite_expr_1 == RegWrite_expr_2)
+solver.add(MemRead_expr_1 == MemRead_expr_2)
+solver.add(MemWrite_expr_1 == MemWrite_expr_2)
+solver.add(Branch_expr_1 == Branch_expr_2)
+solver.add(ALUOp1_expr_1 == ALUOp1_expr_2)
+solver.add(ALUOp0_expr_1 == ALUOp0_expr_2)
+solver.add(Jump_expr_1 == Jump_expr_2)
 
-# Verificar equivalência
+# Verificando a equivalência
 if solver.check() == sat:
-    print("As fórmulas NÃO são equivalentes. A simplificação não é válida.")
+    print("As expressões são equivalentes.")
 else:
-    print("As fórmulas são equivalentes. A simplificação é válida.")
+    print("As expressões não são equivalentes.")
