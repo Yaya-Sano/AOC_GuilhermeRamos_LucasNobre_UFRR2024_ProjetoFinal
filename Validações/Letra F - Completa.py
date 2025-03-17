@@ -1,44 +1,40 @@
 from z3 import *
 
-# Definir as variáveis booleanas para os bits do opcode
-op5, op4, op3, op2, op1, op0 = Bools('op5 op4 op3 op2 op1 op0')
+#Definir variáveis booleanas para cada sinal
+pc_update      = Bool('pc_update')
+mem_read_instr = Bool('mem_read_instr')
+instr_decode   = Bool('instr_decode')
+reg_read_1     = Bool('reg_read_1')
+reg_read_2     = Bool('reg_read_2')
+alu_control    = Bool('alu_control')
+alu_execute    = Bool('alu_execute')
+reg_write      = Bool('reg_write')
 
-# Expressões booleanas dos sinais de controle para uma instrução R
-# Para opcode R: op = 000000
-RegDst   = And(Not(op5), Not(op4), Not(op3), Not(op2), Not(op1), Not(op0))
-ALUSrc   = False   # Como a operação usa ambos os registradores, ALUSrc é 0
-MemToReg = False   # O dado vem da ALU e não da memória
-RegWrite = True    # A instrução R escreve no registrador destino
-MemRead  = False
-MemWrite = False
-Branch   = False
-# ALUOp é representado por dois bits: para instrução R, ALUOp = 10
-ALUOp1 = True
-ALUOp0 = False
+#Expressão booleana completa:
+#((pc_update ∧ mem_read_instr) ∧ (instr_decode ∧ reg_read_1 ∧ reg_read_2) ∧ (alu_control ∧ alu_execute) ∧ reg_write)
+F = And(
+    And(pc_update, mem_read_instr),
+    And(instr_decode, reg_read_1, reg_read_2),
+    And(alu_control, alu_execute),
+    reg_write
+)
 
-# Criação do solver Z3
+#Criação do solver
 solver = Solver()
 
-# Especificação: Para opcode R, todos os bits do opcode devem ser False.
-solver.add(op5 == False, op4 == False, op3 == False, op2 == False, op1 == False, op0 == False)
+#Especificação: A saída F deve ser verdadeira quando todas as entradas forem True.
+solver.add(Not(F))
+solver.add(pc_update      == True)
+solver.add(mem_read_instr == True)
+solver.add(instr_decode   == True)
+solver.add(reg_read_1     == True)
+solver.add(reg_read_2     == True)
+solver.add(alu_control    == True)
+solver.add(alu_execute    == True)
+solver.add(reg_write      == True)
 
-# Validação de saída: RegDst deve ser verdadeiro para opcode R.
-# Se adicionarmos Not(RegDst) e o solver encontrar uma atribuição, significa que a especificação falhou.
-solver.add(Not(RegDst))
-
-# Verifica se há uma contradição com a especificação:
+#Verificar se a especificação foi atendida
 if solver.check() == sat:
-    print("Especificação falhou: RegDst não está verdadeiro para opcode R.")
+    print("A especificação falhou.")
 else:
-    print("Especificação atendida: RegDst está verdadeiro para opcode R.")
-
-# ---------------------------------------------------
-# Caso queira validar outros sinais, pode-se repetir o processo. Por exemplo, para ALUSrc:
-solver.reset()
-solver.add(op5 == False, op4 == False, op3 == False, op2 == False, op1 == False, op0 == False)
-# ALUSrc deve ser falso, logo, se adicionarmos ALUSrc (i.e. True) a especificação, falha.
-solver.add(ALUSrc)  # se ALUSrc for True, a verificação falha.
-if solver.check() == sat:
-    print("Especificação falhou: ALUSrc não está falso para opcode R.")
-else:
-    print("Especificação atendida: ALUSrc está falso para opcode R.")
+    print("A especificação foi atendida.")
