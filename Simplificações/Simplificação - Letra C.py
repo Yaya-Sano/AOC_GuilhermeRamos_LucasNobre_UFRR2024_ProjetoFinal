@@ -1,5 +1,6 @@
-from sympy import symbols, simplify, simplify_logic, And, Or, Not
+from sympy import symbols, simplify_logic, And, Or, Not
 
+# Função para formatar expressões booleanas de forma legível
 def format_expr(expr, top=True):
     """
     Converte a expressão booleana para um formato compacto:
@@ -22,82 +23,53 @@ def format_expr(expr, top=True):
     else:
         return str(expr)
 
-def unidade_controle():
-    # Definindo os bits de estado (usamos 3 bits para representar 5 estados)
-    S2, S1, S0 = symbols('S2 S1 S0')
-    
-    # Estados (exemplo simplificado):
-    IF  = And(Not(S2), Not(S1), Not(S0))  # Busca de Instrução
-    ID  = And(Not(S2), Not(S1), S0)         # Decodificação e Leitura
-    EX  = And(Not(S2), S1, Not(S0))         # Execução
-    MEM = And(Not(S2), S1, S0)              # Acesso à Memória
-    WB  = And(S2, Not(S1), Not(S0))         # Escrita no Registrador
-    
-    # Sinais que identificam o tipo de instrução (apenas um deve ser 1)
-    R, LW, SW, BEQ = symbols('R LW SW BEQ')
-    
-    # Sinais de controle – definidos de forma simplificada:
-    PCWrite   = IF                                  # Atualiza PC somente em IF
-    IRWrite   = IF                                  # Grava a instrução somente em IF
-    MemRead   = IF                                  # Leitura de memória durante IF
-    MemWrite  = And(MEM, SW)                        # Escrita na memória: estado MEM e SW=1
-    RegDst    = And(WB, R)                          # Escolhe rd (instrução R) em WB
-    RegWrite  = And(WB, Or(R, LW))                  # Escrita no registrador em WB para R ou LW
-    MemtoReg  = And(WB, LW)                         # Seleciona dado da memória em LW
-    ALUSrcA   = EX                                  # Usa dado do registrador na EX
-    ALUSrcB   = ID                                  # Usa dado imediato ou PC+4 em ID
-    ALUOp_add = And(EX, Or(LW, SW))                 # Para lw/sw, ALU realiza adição
-    ALUOp_sub = And(EX, BEQ)                        # Para beq, ALU realiza subtração
-    ALUOp_r   = And(EX, R)                          # Para instrução R, operação definida pelo campo funct
-    
-    sinais_controle = {
-        'PCWrite':   PCWrite,
-        'IRWrite':   IRWrite,
-        'MemRead':   MemRead,
-        'MemWrite':  MemWrite,
-        'RegDst':    RegDst,
-        'RegWrite':  RegWrite,
-        'MemtoReg':  MemtoReg,
-        'ALUSrcA':   ALUSrcA,
-        'ALUSrcB':   ALUSrcB,
-        'ALUOp_add': ALUOp_add,
-        'ALUOp_sub': ALUOp_sub,
-        'ALUOp_r':   ALUOp_r
-    }
-    
-    estados = {
-        'IF': IF,
-        'ID': ID,
-        'EX': EX,
-        'MEM': MEM,
-        'WB': WB
-    }
-    
-    return sinais_controle, estados, (S2, S1, S0), (R, LW, SW, BEQ)
+# Definir variáveis de estado e opcode
+S2, S1, S0 = symbols('S2 S1 S0')  # Bits de estado
+Op5, Op4, Op3, Op2, Op1, Op0 = symbols('Op5 Op4 Op3 Op2 Op1 Op0')  # Bits do opcode
 
-def main():
-    sinais, estados, state_bits, instr_types = unidade_controle()
-    S2, S1, S0 = state_bits
-    R, LW, SW, BEQ = instr_types
-    
-    print("Unidade de Controle do Processador Multiciclo MIPS (FSM):\n")
-    
-    print("Estados:")
-    for nome, estado in estados.items():
-        # Tenta simplificar cada estado
-        estado_simpl = simplify_logic(estado, form='cnf')
-        print(f"{nome}: {format_expr(simplify(estado_simpl))}")
-    
-    print("\nSinais de Controle:")
-    for sig, expr in sinais.items():
-        # Primeiro, simplifica usando simplify_logic (forma CNF)
-        expr_simpl = simplify_logic(expr, form='cnf')
-        print(f"{sig} (original): {format_expr(expr)}")
-        print(f"{sig} (simplificado): {format_expr(expr_simpl)}\n")
-    
-    print("Observação:")
-    print("R, LW, SW, BEQ representam os sinais que identificam o tipo de instrução.")
-    print("Exemplo: Para uma instrução do tipo R, R = 1 e LW, SW, BEQ = 0.")
+# Expressões booleanas completas (definidas anteriormente)
+RegDst_expr = And(Not(S2), S1, Not(S0), Not(Op5), Not(Op4), Not(Op3), Not(Op2), Not(Op1), Not(Op0))
+ALUSrc_expr = And(Not(S2), S1, Not(S0), Or(
+    And(Not(Op5), Not(Op4), Not(Op3), Op2, Op1, Op0),  # LW
+    And(Not(Op5), Not(Op4), Op3, Not(Op2), Not(Op1), Not(Op0))  # SW ou ADDI
+))
+MemtoReg_expr = And(Not(S2), Not(S1), S0, Not(Op5), Not(Op4), Not(Op3), Op2, Op1, Op0)  # LW
+RegWrite_expr = And(S2, Not(S1), Not(S0), Or(
+    And(Not(Op5), Not(Op4), Not(Op3), Not(Op2), Not(Op1), Not(Op0)),  # R-type
+    And(Not(Op5), Not(Op4), Not(Op3), Op2, Op1, Op0),  # LW
+    And(Not(Op5), Not(Op4), Op3, Not(Op2), Not(Op1), Not(Op0))  # ADDI
+))
+MemRead_expr = Or(
+    And(Not(S2), Not(S1), Not(S0)),  # Fetch
+    And(Not(S2), Not(S1), S0, Not(Op5), Not(Op4), Not(Op3), Op2, Op1, Op0)  # LW
+)
+MemWrite_expr = And(Not(S2), Not(S1), S0, Not(Op5), Not(Op4), Op3, Not(Op2), Not(Op1), Not(Op0))  # SW
+Branch_expr = And(Not(S2), S1, Not(S0), Not(Op5), Not(Op4), Not(Op3), Not(Op2), Op1, Not(Op0))  # BEQ
+ALUOp1_expr = And(Not(S2), S1, Not(S0), Not(Op5), Not(Op4), Not(Op3), Not(Op2), Not(Op1), Not(Op0))  # R-type
+ALUOp0_expr = And(Not(S2), S1, Not(S0), Not(Op5), Not(Op4), Not(Op3), Not(Op2), Op1, Not(Op0))  # BEQ
+Jump_expr = And(Not(S2), S1, Not(S0), Not(Op5), Not(Op4), Not(Op3), Not(Op2), Op1, Op0)  # J
 
-if __name__ == '__main__':
-    main()
+# Simplificar as expressões booleanas
+RegDst_simplified = simplify_logic(RegDst_expr)
+ALUSrc_simplified = simplify_logic(ALUSrc_expr)
+MemtoReg_simplified = simplify_logic(MemtoReg_expr)
+RegWrite_simplified = simplify_logic(RegWrite_expr)
+MemRead_simplified = simplify_logic(MemRead_expr)
+MemWrite_simplified = simplify_logic(MemWrite_expr)
+Branch_simplified = simplify_logic(Branch_expr)
+ALUOp1_simplified = simplify_logic(ALUOp1_expr)
+ALUOp0_simplified = simplify_logic(ALUOp0_expr)
+Jump_simplified = simplify_logic(Jump_expr)
+
+# Exibir as expressões simplificadas
+print("Expressões booleanas simplificadas da Unidade de Controle:\n")
+print("RegDst:", format_expr(RegDst_simplified))
+print("ALUSrc:", format_expr(ALUSrc_simplified))
+print("MemtoReg:", format_expr(MemtoReg_simplified))
+print("RegWrite:", format_expr(RegWrite_simplified))
+print("MemRead:", format_expr(MemRead_simplified))
+print("MemWrite:", format_expr(MemWrite_simplified))
+print("Branch:", format_expr(Branch_simplified))
+print("ALUOp1:", format_expr(ALUOp1_simplified))
+print("ALUOp0:", format_expr(ALUOp0_simplified))
+print("Jump:", format_expr(Jump_simplified))
